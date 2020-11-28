@@ -1,0 +1,27 @@
+{
+"defaults":{
+	"overwrite":["analyze"],	
+	"order":3,
+	"target":3,
+	"analysisname": "25Feb_rerun_noFilter",
+	"inputdir":"/shared_hd0/corpora/",
+	"faststoragedir": "/shared_hd1/models/ss/",
+	"slowstoragedir": "/shared_hd1/models/ss/",
+	"retrievalcount":50000,
+	"filterlist": "none",
+	"modelcount":25000,
+	"modellist":"unigram_list.txt",
+	"retrievallist":"unigram_list.txt",
+	"smoothing":"kn",
+	"collapseyears":1,
+	"token_corpus": "None",
+	"token_filter": "None",
+	"sublex_measures": []
+},
+"corpora":[				
+		{"corpus":"GoogleBooks2012",
+		"language":"spa-all",				
+		"dictionary_filter": "none",
+		"country_code": "es"}
+	]
+}
