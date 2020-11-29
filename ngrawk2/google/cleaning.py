@@ -10,28 +10,27 @@ import math
 from subprocess import call
 import pdb
 import copy
+from Queue import Empty
 
-class cgWorker(multiprocessing.Process):
+class cgWorker0(multiprocessing.Process):
     '''single-thread worker for parallelized cleanGoogle function'''  
-    def __init__(self,queue,myList):		
-        super(cgWorker, self).__init__()
-        print('Initializing cgWorker')
+    def __init__(self,queue,myList):
+        super(cgWorker0, self).__init__()
         self.queue = queue
-        self.myList = myList        
+        self.myList = myList
         
-	def run(self):    	
-		raise ValueError('Running cgWorker')
-		for job in iter(self.queue.get, None): # Call until the sentinel None is returned
-			print('Job received by worker:')
-			print(job)
-			#inputfile, outputfile, collapseyears, filetype, order, colnames, fixPunc=True
-			cleanGoogleFile(job['inputfile'], job['outputfile'], job['collapseyears'],job['filetype'], job['order'], job['colnames'])    
-
-			print('Reached here in multiprocessing!')    
-				
+    def run(self):    	
+        for job in iter(self.queue.get, None): # Call until the sentinel None is returned
+        	try:
+        		cleanGoogleFile(job['inputfile'], job['outputfile'], job['collapseyears'],job['filetype'], job['order'], job['colnames'])        
+        	except ValueError:
+        		print 'Problems encountered in cleaning '+job['inputfile']
 			self.myList.append(job['inputfile'])
 
-def cleanGoogleDirectory(inputdir, outputdir, collapseyears, order, colnames, numThreads=12):
+def cgWorker3(arg_dict):
+	return(cleanGoogleFile(**arg_dict))	
+	
+def cleanGoogleDirectory0(inputdir, outputdir, collapseyears, order, colnames, numThreads=20):
 	'''Parallelized, load-balanced execution of cleanGoogle, starting with the largest files'''
 	start_time =  time.time()
 
@@ -45,8 +44,8 @@ def cleanGoogleDirectory(inputdir, outputdir, collapseyears, order, colnames, nu
 	# Start and keep track of processes
 	procs = []
 	for i in range(numThreads):
-		p = cgWorker( q,myList )		
-		procs.append(p)		
+		p = cgWorker0( q,myList )
+		procs.append(p)
 		p.start()
 	              
 	files = glob.glob(os.path.join(inputdir,'*.gz')) + glob.glob(os.path.join(inputdir,'*.zip')) 
@@ -65,8 +64,7 @@ def cleanGoogleDirectory(inputdir, outputdir, collapseyears, order, colnames, nu
 	filesizes.sort(key=lambda tup: tup[1], reverse=True)
 	
 	extension = '.yc' if collapseyears else '.output'
-	
-	# Add data, in the form of a dictionary to the queue for our processeses to grab    	
+	# Add data, in the form of a dictionary to the queue for our processeses to grab    
 	[q.put({"inputfile": file[0], "outputfile": os.path.join(outputdir, os.path.splitext(os.path.basename(file[0]))[0]+extension),"collapseyears": collapseyears, 'filetype':filetype, 'order':order, 'colnames':colnames}) for file in filesizes] 
       
 	#append none to kill the workers with poison pills		
@@ -76,14 +74,46 @@ def cleanGoogleDirectory(inputdir, outputdir, collapseyears, order, colnames, nu
 	# Ensure all processes have finished and will be terminated by the OS
 	for p in procs:
 		p.join()     
-
-	if len(myList) == 0:
-		raise ValueError('Nothing in MyList')
-
+        
 	for item in myList:
-		print(item)	
+		print(item)
 
 	print('Done! processed '+str(len(myList))+' files; elapsed time is '+str(round(time.time()-start_time /  60., 5))+' minutes') 	
+
+
+def cleanGoogleDirectory3(inputdir, outputdir, collapseyears, order, colnames, numThreads=24):
+	'''Parallelized, load-balanced execution of cleanGoogle, starting with the largest files'''
+	# https://stackoverflow.com/questions/20887555/dead-simple-example-of-using-multiprocessing-queue-pool-and-locking
+	start_time =  time.time()
+
+	# Put the manager in charge of how the processes access the list
+	pool = multiprocessing.Pool(numThreads)
+
+	# FIFO Queue for multiprocessing	              
+	files = glob.glob(os.path.join(inputdir,'*.gz')) + glob.glob(os.path.join(inputdir,'*.zip')) 
+	if len(files) > 0:
+		print('File type is gz')	
+		filetype = 'gz'
+	else:
+		files = glob.glob(os.path.join(inputdir,'*.bz2'))
+		if len(files) > 0:
+			print('File type is bz2')	
+			filetype = 'bz2'	
+		else:
+			raise ValueError('No files found')		
+		
+	filesizes = [(x, os.stat(x).st_size) for x in files]
+	filesizes.sort(key=lambda tup: tup[1], reverse=True)
+	
+	extension = '.yc' if collapseyears else '.output'
+	
+	# Add data, in the form of a dictionary to the queue for our processeses to grab    	
+	jobs = [{"inputfile": file[0], "outputfile": os.path.join(outputdir, os.path.splitext(os.path.basename(file[0]))[0]+extension),"collapseyears": collapseyears, 'filetype':filetype, 'order':order, 'colnames':colnames} for file in filesizes] 	
+
+	results = pool.map(cgWorker3, jobs)
+	
+
+	print('Finished cleaning Google input files')
 
 def cleanGoogleFile(inputfile, outputfile, collapseyears, filetype, order, colnames, fixPunc=True):
 	'''Clean google trigram file. This is a highly streamlined version of process google that finds only non POS-tagged lines, with no punctuation, and makes them lowercase, using grep to find lines without punctuation (including _, which excludes lines with POS tags) and perl to lowercase the string, while maintaining the unicode encoding. If collapseyears is true, combine the year counts into a single record using collapseGoogleNgrams'''
