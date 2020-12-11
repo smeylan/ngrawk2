@@ -60,7 +60,14 @@ def getMeanSurprisal(backwards_zs_path, forwards_txt_path, filter_file, retrieva
 		retrievalDF = retrievalDF.rename(columns={'frequency': 'retrieval_count'})
 	else:
 		raise ValueError('Filter file must contain "count" or "frequency" column')	
-	
+
+	# retrievalDF['nchar'] = [len(x) for x in retrievalDF.word]
+	# retrievalDF['is_numeric'] = [np.char.isnumeric(x) for x in retrievalDF.word]	
+	# retrievalDF = retrievalDF.loc[(retrievalDF.nchar >= 3) & ~retrievalDF.is_numeric]
+	# import pdb
+	# pdb.set_trace()
+
+
 	print('Loading filter file...')	#use the column word	
 	if filter_file is not None and filter_file != "None" and filter_file != "none":
 		filterDF = ngrawk2.ngrawk_utils.readCSVorTxt(filter_file)

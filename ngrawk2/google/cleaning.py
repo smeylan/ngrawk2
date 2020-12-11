@@ -30,8 +30,9 @@ class cgWorker0(multiprocessing.Process):
 def cgWorker3(arg_dict):
 	return(cleanGoogleFile(**arg_dict))	
 	
-def cleanGoogleDirectory0(inputdir, outputdir, collapseyears, order, colnames, numThreads=20):
+def cleanGoogleDirectory0(inputdir, outputdir, collapseyears, order, colnames, numThreads=12):
 	'''Parallelized, load-balanced execution of cleanGoogle, starting with the largest files'''
+	# do not increase the number of threads -- I/O is blocking
 	start_time =  time.time()
 
 	# Put the manager in charge of how the processes access the list
@@ -81,7 +82,7 @@ def cleanGoogleDirectory0(inputdir, outputdir, collapseyears, order, colnames, n
 	print('Done! processed '+str(len(myList))+' files; elapsed time is '+str(round(time.time()-start_time /  60., 5))+' minutes') 	
 
 
-def cleanGoogleDirectory3(inputdir, outputdir, collapseyears, order, colnames, numThreads=24):
+def cleanGoogleDirectory3(inputdir, outputdir, collapseyears, order, colnames, numThreads=12):
 	'''Parallelized, load-balanced execution of cleanGoogle, starting with the largest files'''
 	# https://stackoverflow.com/questions/20887555/dead-simple-example-of-using-multiprocessing-queue-pool-and-locking
 	start_time =  time.time()
@@ -121,13 +122,6 @@ def cleanGoogleFile(inputfile, outputfile, collapseyears, filetype, order, colna
 	tempfile1 = outputfile+'_temp1'
 	tempfile2 = outputfile+'_temp2'
 
-	print('Clean Google File arguments')
-	print(inputfile)
-	print(outputfile)
-	print(collapseyears)
-	print(filetype)
-	print(order)
-	print(colnames)
 	format_unzipper = {'gz':'zcat', 'csv.zip':'zcat','bz2':'bzcat'}
 
 	cleanGoogleCommand = format_unzipper[filetype]+" "+inputfile+" | LC_ALL=C grep -v '[]_,.!\"#$%&()*+-/:;<>=@^{|}~[]' | tr A-Z a-z > "+tempfile0		

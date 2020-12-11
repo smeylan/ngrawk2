@@ -101,13 +101,15 @@ def analyzeCorpus(corpusSpecification):
 		raise NotImplementedError		
 	
 	#to use most frequent words from Google for the sublexical surprisal model
-	forwardBigramPath = os.path.join(lexSurpDir, '2gram-forwards-collapsed.txt')
+	backwardsTrigramPath = os.path.join(lexSurpDir, '3gram-backwards-collapsed.txt')
 	unigramCountFilePath = os.path.join(lexSurpDir, 'unigram_list.txt')
 
-	ngrawk2.ngrawk_utils.marginalizeNgramFile(forwardBigramPath, unigramCountFilePath, 1, 'numeric', colnames=['ngram','count'],sum_columns=['count']) 	
+	#ngrawk2.ngrawk_utilsmarginalizeNgramFile(inputfile, unigramCountFilePath, 1, 'numeric', ['ngram','count'], ['count'])
+	# December 2020: need to get unigram counts by marginalizing from the trigram records, not the bigram records
+	ngrawk2.ngrawk_utils.marginalizeNgramFile(backwardsTrigramPath, unigramCountFilePath, 1, 'numeric', colnames=['ngram','count'],sum_columns=['count']) 	
 
 	#to use OPUS for the sublexical surprisal model:
-	#unigramCountFilePath = corpusSpecification['wordlist']	
+	#unigramCountFilePath = corpusSpecification['wordlist']
 
 	print('Getting mean lexical surprisal estimates for types in the langauge...')
 	forwardsNminus1txt = os.path.join(lexSurpDir,str(int(n)-1)+'gram-forwards-collapsed.txt')

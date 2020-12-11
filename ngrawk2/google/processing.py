@@ -54,7 +54,7 @@ def getGoogleBooksLanguageModel(corpusSpecification, n, direction, filetype, col
 				if cleanFileProp < .5: #!!!
 					ngrawk2.google.cleaning.cleanGoogleDirectory0(inputdir,outputdir,corpusSpecification['collapseyears'], n, colnames)
 					cleanFileProp = ngrawk2.ngrawk_utils.checkForMissingFiles(inputdir, '*.'+ filetype, outputdir, '*.yc')	
-					if cleanFileProp < .9:
+					if cleanFileProp < .1:
 						raise ValueError('No cleaned files!')
 
 
